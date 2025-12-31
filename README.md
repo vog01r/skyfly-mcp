@@ -59,7 +59,7 @@
 
 ```bash
 # Cloner le repo
-git clone https://github.com/YOUR_USERNAME/skyfly-mcp.git
+git clone https://github.com/vog01r/skyfly-mcp.git
 cd skyfly-mcp
 
 # Créer l'environnement virtuel
