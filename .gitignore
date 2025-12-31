@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursor/
+
+# Environment & Secrets
+.env
+.env.*
+*.pem
+certs/
+
+# Database & Data
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# FAA Data (too large for git - download separately)
+ReleasableAircraft/
+ReleasableAircraft_dataset/
+*.txt.gz
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+

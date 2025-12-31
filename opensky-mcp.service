@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenSky MCP Server
+After=network.target
+
+[Service]
+Type=exec
+User=root
+WorkingDirectory=/opt/git/mcpskyfly
+ExecStart=/opt/git/mcpskyfly/venv/bin/uvicorn http_server:app --host 0.0.0.0 --port 443 --ssl-keyfile=/opt/git/mcpskyfly/certs/privkey.pem --ssl-certfile=/opt/git/mcpskyfly/certs/fullchain.pem --workers 4
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
