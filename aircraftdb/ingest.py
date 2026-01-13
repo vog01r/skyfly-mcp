@@ -304,6 +304,7 @@ class FAAAircraftIngest:
 def ingest_xlsx(file_path: Path, database: 'AircraftDatabase') -> Dict[str, int]:
     """Ingère un fichier Excel."""
     try:
+        import openpyxl
     except ImportError:
         logger.error("openpyxl not installed. Run: pip install openpyxl")
         return {'error': 'openpyxl not installed'}
