@@ -40,7 +40,7 @@ async def main():
                 }
             })
             
-            # Lire la réponse
+            # Read the response
             async for line in sse.content:
                 if line.decode().strip().startswith("data: "):
                     print("✅ Initialisé!")
@@ -64,7 +64,7 @@ async def main():
                         print(f"   {prefix} {tool}")
                     break
             
-            # 4. Appeler un outil
+            # 4. Call a tool
             print("\n🔍 Appel de get_aircraft_in_region (France)...")
             await session.post(messages_url, json={
                 "jsonrpc": "2.0",
