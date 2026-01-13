@@ -12,7 +12,6 @@ from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent
 from opensky_client import AsyncOpenSkyApi
 from aircraftdb.tools import get_aircraftdb_tools, call_aircraftdb_tool
-    import uvicorn
 
 """
 Serveur HTTP/SSE pour exposer le serveur MCP via HTTP/HTTPS.

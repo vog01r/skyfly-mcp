@@ -72,6 +72,7 @@ class FlightData:
     arrivalAirportCandidatesCount: int
 
     def to_dict(self) -> dict:
+        """Convertit l'objet en dictionnaire."""
         return {
             "icao24": self.icao24,
             "firstSeen": self.firstSeen,
@@ -99,6 +100,7 @@ class Waypoint:
     on_ground: bool
 
     def to_dict(self) -> dict:
+        """Convertit l'objet en dictionnaire."""
         return {
             "time": self.time,
             "latitude": self.latitude,
@@ -119,6 +121,7 @@ class FlightTrack:
     path: list
 
     def to_dict(self) -> dict:
+        """Convertit l'objet en dictionnaire."""
         return {
             "icao24": self.icao24,
             "startTime": self.startTime,
