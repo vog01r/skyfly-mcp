@@ -1,0 +1,90 @@
+# Configuration Dependabot pour Skyfly MCP
+# Automatise les mises à jour de dépendances pour maintenir la sécurité
+
+version: 2
+updates:
+  # Dépendances Python
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    # Regrouper les mises à jour mineures et patch
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Limiter le nombre de PRs ouvertes
+    open-pull-requests-limit: 5
+    # Assignés et reviewers
+    assignees:
+      - "vog01r"
+    reviewers:
+      - "vog01r"
+    # Labels pour les PRs
+    labels:
+      - "dependencies"
+      - "security"
+      - "automated"
+    # Messages de commit personnalisés
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Stratégie de rebase
+    rebase-strategy: "auto"
+    # Ignorer les versions majeures par défaut (sécurité)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # Permettre les mises à jour majeures pour certains packages critiques
+    allow:
+      - dependency-name: "mcp"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "httpx"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+
+  # Actions GitHub (si présentes)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 3
+    assignees:
+      - "vog01r"
+    labels:
+      - "github-actions"
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker (si présent)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+    assignees:
+      - "vog01r"
+    labels:
+      - "docker"
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
