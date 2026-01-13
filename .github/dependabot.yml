@@ -1,0 +1,79 @@
+# Configuration Dependabot pour Skyfly MCP
+# Automatise les mises à jour de sécurité et de dépendances
+
+version: 2
+updates:
+  # Dépendances Python (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    # Grouper les mises à jour mineures ensemble
+    groups:
+      minor-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Configuration des pull requests
+    open-pull-requests-limit: 5
+    reviewers:
+      - "vog01r"  # À ajuster selon les mainteneurs
+    assignees:
+      - "vog01r"  # À ajuster selon les mainteneurs
+    # Labels pour les PRs
+    labels:
+      - "dependencies"
+      - "security"
+    # Messages de commit personnalisés
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Stratégie de rebase
+    rebase-strategy: "auto"
+    # Ignorer certaines dépendances si nécessaire
+    ignore:
+      # Exemple : ignorer les mises à jour majeures d'une dépendance spécifique
+      # - dependency-name: "starlette"
+      #   update-types: ["version-update:semver-major"]
+    
+  # Actions GitHub (si des workflows sont ajoutés plus tard)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "vog01r"
+    labels:
+      - "github-actions"
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker (si un Dockerfile est ajouté plus tard)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "vog01r"
+    labels:
+      - "docker"
+      - "dependencies"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
