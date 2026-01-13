@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+import json
+import time
+from starlette.applications import Starlette
+from starlette.routing import Route, Mount
+from starlette.requests import Request
+from starlette.responses import JSONResponse, HTMLResponse, Response
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from mcp.server import Server
+from mcp.server.sse import SseServerTransport
+from mcp.types import Tool, TextContent
+from opensky_client import AsyncOpenSkyApi
+from aircraftdb.tools import get_aircraftdb_tools, call_aircraftdb_tool
+    import uvicorn
+
 """
 Serveur HTTP/SSE pour exposer le serveur MCP via HTTP/HTTPS.
 Combine DEUX MCPs:
@@ -9,27 +24,14 @@ Utilise le transport SSE officiel du SDK MCP.
 Supporte plusieurs clients simultanés grâce à l'architecture asynchrone.
 """
 
-import json
-import time
 
-from starlette.applications import Starlette
-from starlette.routing import Route, Mount
-from starlette.requests import Request
-from starlette.responses import JSONResponse, HTMLResponse, Response
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
 
-from mcp.server import Server
-from mcp.server.sse import SseServerTransport
-from mcp.types import Tool, TextContent
 
-from opensky_client import AsyncOpenSkyApi
 
 # Import des outils AircraftDB
-from aircraftdb.tools import get_aircraftdb_tools, call_aircraftdb_tool
 
 
-# Créer le serveur MCP unifié
+# Create unified MCP server
 mcp_server = Server("skyfly-aircraftdb-mcp")
 
 # Client OpenSky API (Skyfly)
@@ -233,7 +235,7 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Exécute un outil MCP (route vers Skyfly ou AircraftDB selon le nom)."""
     try:
-        # Router vers AircraftDB si le nom commence par "db_"
+        # Route to AircraftDB if name starts with "db_"
         if name.startswith("db_"):
             return await call_aircraftdb_tool(name, arguments)
         
@@ -596,7 +598,7 @@ routes = [
     Route("/", homepage),
     Route("/health", health_check),
     Route("/sse", handle_sse),
-    # Mount pour le handler de messages POST
+    # Mount for POST message handler
     Mount("/messages", app=sse_transport.handle_post_message),
 ]
 
@@ -605,5 +607,4 @@ app = Starlette(routes=routes, middleware=middleware)
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

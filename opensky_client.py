@@ -32,6 +32,7 @@ class StateVector:
     category: int
 
     def to_dict(self) -> dict:
+        """Convertit l'objet en dictionnaire."""
         return {
             "icao24": self.icao24,
             "callsign": self.callsign,
