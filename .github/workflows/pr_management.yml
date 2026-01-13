@@ -1,0 +1,147 @@
+name: 'Gestion Automatique des PRs - SKYFLY-2'
+
+on:
+  schedule:
+    # Exécute tous les jours à 9h UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action à effectuer'
+        required: true
+        default: 'report'
+        type: choice
+        options:
+          - report
+          - auto
+          - execute
+      dry_run:
+        description: 'Mode simulation (dry-run)'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  manage_prs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Setup GitHub CLI
+        run: |
+          # GitHub CLI est déjà installé sur ubuntu-latest
+          gh --version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Exécuter l'outil de gestion des PRs
+        run: |
+          python pr_management_tool.py --action ${{ github.event.inputs.action || 'report' }} ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Créer un issue de rapport (si nécessaire)
+        if: github.event.inputs.action == 'report' || github.event_name == 'schedule'
+        run: |
+          # Générer le rapport et créer un issue si des problèmes sont détectés
+          REPORT=$(python pr_management_tool.py --action report)
+          PR_COUNT=$(echo "$REPORT" | grep -o "Total PRs ouvertes.*[0-9]*" | grep -o "[0-9]*" | tail -1)
+          
+          if [ "$PR_COUNT" -gt 5 ]; then
+            echo "Création d'un issue pour signaler le problème..."
+            gh issue create \
+              --title "🚨 Alerte: $PR_COUNT Pull Requests en attente de review" \
+              --body "$REPORT
+
+## Actions Automatiques Suggérées
+
+Ce rapport a été généré automatiquement par le workflow de gestion des PRs.
+Référence: SKYFLY-2
+
+### Prochaines Étapes
+1. Examiner les PRs prioritaires
+2. Résoudre les conflits identifiés  
+3. Activer l'auto-merge pour les PRs éligibles
+4. Consolider les PRs liées si nécessaire
+
+---
+*Généré le $(date) par le workflow GitHub Actions*" \
+              --label "automation,pr-management,skyfly-2"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job pour nettoyer automatiquement les PRs obsolètes
+  cleanup_stale_prs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup GitHub CLI
+        run: gh --version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Fermer les PRs obsolètes
+        run: |
+          # Fermer les PRs draft de plus de 30 jours
+          gh pr list --state open --json number,title,createdAt,isDraft --jq '.[] | select(.isDraft == true and (now - (.createdAt | fromdateiso8601)) > 2592000) | .number' | while read pr_number; do
+            if [ ! -z "$pr_number" ]; then
+              echo "Fermeture de la PR obsolète #$pr_number"
+              gh pr close "$pr_number" --comment "🤖 PR fermée automatiquement: draft inactive depuis plus de 30 jours. Référence: SKYFLY-2"
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job pour activer l'auto-merge sur les petites PRs
+  enable_auto_merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    if: github.event.inputs.action == 'execute' && github.event.inputs.dry_run == 'false'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Activer auto-merge pour les PRs éligibles
+        run: |
+          python pr_management_tool.py --action execute
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
