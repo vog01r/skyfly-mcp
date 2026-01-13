@@ -2,156 +2,176 @@
 
 ## Versions Supportées
 
-Nous prenons la sécurité au sérieux. Les versions suivantes de Skyfly MCP sont actuellement supportées avec des mises à jour de sécurité :
+Nous supportons activement les versions suivantes du projet Skyfly MCP avec des mises à jour de sécurité :
 
 | Version | Supportée          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+| 1.x.x   | :white_check_mark: |
 | < 1.0   | :x:                |
 
-## Signaler une Vulnérabilité
+## Signalement de Vulnérabilités de Sécurité
 
-### Processus de Signalement
+### Comment Signaler
 
-Si vous découvrez une vulnérabilité de sécurité dans Skyfly MCP, nous vous demandons de nous la signaler de manière responsable :
+Si vous découvrez une vulnérabilité de sécurité dans Skyfly MCP, veuillez nous la signaler de manière responsable :
 
 1. **NE PAS** créer d'issue publique sur GitHub
 2. **NE PAS** divulguer publiquement la vulnérabilité avant qu'elle soit corrigée
-3. Envoyez un email détaillé à : **security@skyfly-mcp.com** (à configurer)
+3. Envoyez un email détaillé à : **security@skyfly-mcp.org** (remplacez par votre email de sécurité)
+4. Incluez les informations suivantes :
+   - Description détaillée de la vulnérabilité
+   - Étapes pour reproduire le problème
+   - Impact potentiel
+   - Versions affectées
+   - Suggestions de correction (si vous en avez)
+   - Votre nom/pseudo pour les remerciements (optionnel)
+   - Toute information supplémentaire pertinente
 
-### Informations à Inclure
+### Processus de Traitement
 
-Veuillez inclure autant d'informations que possible :
-
-- Description détaillée de la vulnérabilité
-- Étapes pour reproduire le problème
-- Versions affectées
-- Impact potentiel
-- Suggestions de correction (si vous en avez)
-- Votre nom/pseudo pour les remerciements (optionnel)
+1. **Accusé de réception** : Nous accuserons réception de votre rapport dans les 48 heures
+2. **Évaluation initiale** : Évaluation de la vulnérabilité dans les 5 jours ouvrables
+3. **Investigation** : Investigation approfondie et développement d'un correctif
+4. **Divulgation coordonnée** : Nous travaillerons avec vous pour une divulgation responsable
+5. **Publication du correctif** : Publication d'une mise à jour de sécurité
+6. **Reconnaissance** : Reconnaissance publique de votre contribution (si souhaité)
 
 ### Délais de Réponse
 
 - **Accusé de réception** : 48 heures
-- **Évaluation initiale** : 7 jours
-- **Correction et publication** : 30 jours (selon la complexité)
-
-### Politique de Divulgation
-
-Nous suivons une politique de divulgation responsable :
-
-1. Nous confirmons la réception de votre rapport
-2. Nous évaluons et reproduisons la vulnérabilité
-3. Nous développons et testons une correction
-4. Nous publions la correction dans une nouvelle version
-5. Nous publions un avis de sécurité avec les détails appropriés
-6. Nous vous remercions publiquement (si souhaité)
+- **Évaluation initiale** : 5 jours ouvrables
+- **Correctif pour vulnérabilités critiques** : 7-14 jours
+- **Correctif pour vulnérabilités moyennes/faibles** : 30-90 jours
 
 ## Bonnes Pratiques de Sécurité
 
 ### Pour les Utilisateurs
 
-#### Configuration Sécurisée
+1. **Authentification OpenSky** :
+   - Utilisez des identifiants OpenSky Network dédiés
+   - Ne partagez jamais vos identifiants
+   - Stockez les identifiants dans des variables d'environnement
 
-- **Variables d'environnement** : Utilisez `.env` pour les données sensibles, jamais dans le code
-- **Authentification OpenSky** : Stockez les credentials de manière sécurisée
-- **HTTPS** : Utilisez toujours HTTPS en production (voir `setup_ssl.sh`)
-- **Permissions** : Limitez les permissions des fichiers de configuration
+2. **Configuration SSL/TLS** :
+   - Utilisez HTTPS en production
+   - Configurez des certificats SSL valides
+   - Utilisez des protocoles TLS récents (1.2+)
 
-#### Déploiement
+3. **Gestion des Secrets** :
+   - Utilisez le fichier `.env` pour les secrets (jamais commité)
+   - Générez des clés secrètes fortes et uniques
+   - Rotez régulièrement les clés d'API
 
-```bash
-# Bonnes pratiques pour la production
-chmod 600 .env                    # Permissions restrictives
-chown root:root .env              # Propriétaire approprié
-```
-
-#### Configuration CORS
-
-```python
-# Limitez les origines en production
-CORS_ORIGINS=https://your-domain.com,https://app.your-domain.com
-```
+4. **Mise à Jour** :
+   - Maintenez le serveur à jour avec les dernières versions
+   - Surveillez les alertes de sécurité
+   - Appliquez rapidement les correctifs de sécurité
 
 ### Pour les Développeurs
 
-#### Gestion des Secrets
+1. **Validation des Entrées** :
+   - Validez toutes les entrées utilisateur
+   - Utilisez des paramètres typés avec Pydantic
+   - Implémentez une validation stricte des paramètres d'API
 
-- **Jamais** de credentials en dur dans le code
-- Utilisez des variables d'environnement ou des gestionnaires de secrets
-- Ajoutez `.env` à `.gitignore` (déjà fait)
+2. **Gestion des Erreurs** :
+   - Ne pas exposer d'informations sensibles dans les messages d'erreur
+   - Logger les erreurs de manière sécurisée
+   - Implémenter une gestion d'erreur robuste
 
-#### Validation des Entrées
+3. **Dépendances** :
+   - Maintenez les dépendances à jour
+   - Utilisez Dependabot pour les mises à jour automatiques
+   - Auditez régulièrement les dépendances avec `pip audit`
 
-- Validez toutes les entrées utilisateur
-- Sanitisez les paramètres d'URL et les données POST
-- Utilisez des bibliothèques de validation (Pydantic est déjà inclus)
+4. **Tests de Sécurité** :
+   - Implémentez des tests de sécurité automatisés
+   - Effectuez des revues de code régulières
+   - Utilisez des outils d'analyse statique
 
-#### Dépendances
+## Configuration Sécurisée
 
-- Maintenez les dépendances à jour
-- Utilisez `pip-audit` pour détecter les vulnérabilités
-- Configurez Dependabot (voir `.github/dependabot.yml`)
+### Variables d'Environnement Sensibles
 
-#### Logs et Monitoring
+Les variables suivantes contiennent des informations sensibles et ne doivent jamais être committées :
 
-- **Ne loggez jamais** de données sensibles (mots de passe, tokens)
-- Implémentez un monitoring des erreurs
-- Configurez des alertes pour les tentatives d'accès suspect
+```bash
+OPENSKY_USERNAME=your_username
+OPENSKY_PASSWORD=your_password
+SECRET_KEY=your_secret_key
+SSL_CERT_PATH=/path/to/cert.pem
+SSL_KEY_PATH=/path/to/key.pem
+```
 
-## Vulnérabilités Connues et Mitigations
+### Permissions de Fichiers
 
-### Rate Limiting
+```bash
+# Fichier .env (lecture seule pour le propriétaire)
+chmod 600 .env
 
-**Problème** : L'API OpenSky a des limites de taux strictes
-**Mitigation** : 
-- Implémentation d'un cache local
-- Respect des limites API (10s sans auth, plus avec auth)
-- Gestion des erreurs 429 (Too Many Requests)
+# Certificats SSL
+chmod 600 /path/to/ssl/cert.pem
+chmod 600 /path/to/ssl/key.pem
 
-### Injection de Données
+# Base de données
+chmod 644 aircraftdb/aircraft.db
+```
 
-**Problème** : Requêtes SQL potentielles dans AircraftDB
-**Mitigation** :
-- Utilisation d'ORM/requêtes préparées
-- Validation stricte des paramètres
-- Sanitisation des entrées utilisateur
+### Firewall et Réseau
 
-### Exposition de Données
+1. **Ports** :
+   - Exposez uniquement les ports nécessaires (8000 par défaut)
+   - Utilisez un reverse proxy (nginx, Apache) en production
+   - Configurez un firewall approprié
 
-**Problème** : Données d'aviation potentiellement sensibles
-**Mitigation** :
-- Limitation du nombre de résultats retournés
-- Pas de données d'identification personnelle
-- Conformité aux politiques OpenSky Network
+2. **CORS** :
+   - Configurez CORS de manière restrictive
+   - Évitez `ALLOWED_ORIGINS=*` en production
+   - Spécifiez des domaines autorisés explicites
 
-## Conformité et Réglementations
+## Audit de Sécurité
 
-### OpenSky Network
+### Outils Recommandés
 
-- Respect des conditions d'utilisation de l'API
-- Attribution appropriée des données
-- Pas de redistribution non autorisée
+```bash
+# Audit des dépendances Python
+pip install pip-audit
+pip-audit
 
-### Protection des Données
+# Analyse statique de sécurité
+pip install bandit
+bandit -r .
 
-- Pas de stockage de données personnelles
-- Données publiques uniquement (positions d'aéronefs)
-- Conformité RGPD par design (pas de données personnelles)
+# Scan de vulnérabilités
+pip install safety
+safety check
+```
 
-## Contact Sécurité
+### Checklist de Sécurité
 
-- **Email** : security@skyfly-mcp.com (à configurer)
-- **PGP Key** : [À ajouter si nécessaire]
-- **Response Time** : 48h pour accusé de réception
+- [ ] Fichier `.env` configuré et non commité
+- [ ] Certificats SSL configurés pour HTTPS
+- [ ] Identifiants OpenSky sécurisés
+- [ ] CORS configuré de manière restrictive
+- [ ] Dépendances mises à jour
+- [ ] Logs de sécurité configurés
+- [ ] Firewall configuré
+- [ ] Tests de sécurité en place
 
-## Remerciements
+## Contact
 
-Nous remercions les chercheurs en sécurité qui nous aident à améliorer la sécurité de Skyfly MCP :
+Pour toute question relative à la sécurité :
 
-- [Liste des contributeurs sécurité - à maintenir]
+- **Email de sécurité** : security@skyfly-mcp.org
+- **Issues non-sensibles** : [GitHub Issues](https://github.com/vog01r/skyfly-mcp/issues)
+- **Documentation** : [README.md](README.md)
+
+## Historique des Mises à Jour
+
+| Date | Version | Description |
+|------|---------|-------------|
+| 2026-01-13 | 1.0.0 | Politique de sécurité initiale |
 
 ---
 
-**Dernière mise à jour** : Janvier 2026
-**Version du document** : 1.0
+**Merci de contribuer à la sécurité de Skyfly MCP !** 🔒✈️

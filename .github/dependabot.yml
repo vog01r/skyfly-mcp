@@ -1,9 +1,9 @@
 # Configuration Dependabot pour Skyfly MCP
-# Automatise les mises à jour de sécurité et de dépendances
+# Automatise les mises à jour de dépendances pour maintenir la sécurité
 
 version: 2
 updates:
-  # Dépendances Python (pip)
+  # Dépendances Python
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -11,24 +11,26 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Europe/Paris"
-    # Grouper les mises à jour mineures ensemble
+    # Regrouper les mises à jour mineures et patch
     groups:
-      minor-updates:
+      minor-and-patch:
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
-    # Configuration des pull requests
+    # Limiter le nombre de PRs ouvertes
     open-pull-requests-limit: 5
-    reviewers:
-      - "vog01r"  # À ajuster selon les mainteneurs
+    # Assignés et reviewers
     assignees:
-      - "vog01r"  # À ajuster selon les mainteneurs
+      - "vog01r"
+    reviewers:
+      - "vog01r"
     # Labels pour les PRs
     labels:
       - "dependencies"
       - "security"
+      - "automated"
     # Messages de commit personnalisés
     commit-message:
       prefix: "deps"
@@ -36,13 +38,20 @@ updates:
       include: "scope"
     # Stratégie de rebase
     rebase-strategy: "auto"
-    # Ignorer certaines dépendances si nécessaire
+    # Ignorer les versions majeures par défaut (sécurité)
     ignore:
-      # Exemple : ignorer les mises à jour majeures d'une dépendance spécifique
-      # - dependency-name: "starlette"
-      #   update-types: ["version-update:semver-major"]
-    
-  # Actions GitHub (si des workflows sont ajoutés plus tard)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # Permettre les mises à jour majeures pour certains packages critiques
+    allow:
+      - dependency-name: "mcp"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "httpx"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+
+  # Actions GitHub (si présentes)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -50,17 +59,18 @@ updates:
       day: "monday"
       time: "10:00"
       timezone: "Europe/Paris"
-    open-pull-requests-limit: 2
-    reviewers:
+    open-pull-requests-limit: 3
+    assignees:
       - "vog01r"
     labels:
       - "github-actions"
       - "dependencies"
+      - "automated"
     commit-message:
       prefix: "ci"
       include: "scope"
 
-  # Docker (si un Dockerfile est ajouté plus tard)
+  # Docker (si présent)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -69,11 +79,12 @@ updates:
       time: "09:00"
       timezone: "Europe/Paris"
     open-pull-requests-limit: 2
-    reviewers:
+    assignees:
       - "vog01r"
     labels:
       - "docker"
       - "dependencies"
+      - "automated"
     commit-message:
       prefix: "docker"
       include: "scope"
