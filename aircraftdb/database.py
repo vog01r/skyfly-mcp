@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Chemin par défaut de la base de données
+# Default database path
 DEFAULT_DB_PATH = Path(__file__).parent.parent / "data" / "aircraft.db"
 
 
@@ -29,7 +29,7 @@ class AircraftDatabase:
         self._init_schema()
     
     @contextmanager
-    def get_connection(self):
+    def get_connection(self) -> 'sqlite3.Connection':
         """Context manager pour les connexions SQLite."""
         conn = sqlite3.connect(str(self.db_path), timeout=30.0)
         conn.row_factory = sqlite3.Row

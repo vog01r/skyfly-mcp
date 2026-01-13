@@ -3,7 +3,6 @@ Module d'ingestion des fichiers FAA pour AircraftDB.
 Parse et importe les fichiers ACFTREF, ENGINE, MASTER, DEALER, DEREG.
 Support CSV, XLSX, JSON, Parquet avec détection automatique.
 """
-
 import csv
 import json
 import os
@@ -12,6 +11,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List, Generator
 from datetime import datetime
 import re
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -159,11 +160,11 @@ def parse_faa_csv(file_path: Path, column_mapping: Dict[str, str]) -> Generator[
     encoding = detect_encoding(file_path)
     
     with open(file_path, 'r', encoding=encoding, errors='replace') as f:
-        # Lire le header
+        # Read the header
         reader = csv.reader(f)
         header = next(reader)
         
-        # Nettoyer le header
+        # Clean the header
         header = [h.strip() for h in header]
         
         # Mapper les colonnes
@@ -300,7 +301,7 @@ class FAAAircraftIngest:
         return results
 
 
-def ingest_xlsx(file_path: Path, database) -> Dict[str, int]:
+def ingest_xlsx(file_path: Path, database: 'AircraftDatabase') -> Dict[str, int]:
     """Ingère un fichier Excel."""
     try:
         import openpyxl
@@ -352,7 +353,7 @@ def ingest_xlsx(file_path: Path, database) -> Dict[str, int]:
     return results
 
 
-def ingest_json(file_path: Path, database) -> Dict[str, int]:
+def ingest_json(file_path: Path, database: 'AircraftDatabase') -> Dict[str, int]:
     """Ingère un fichier JSON."""
     logger.info(f"Ingesting JSON from {file_path}")
     
@@ -371,7 +372,7 @@ def ingest_json(file_path: Path, database) -> Dict[str, int]:
                 count += 1
         return {'data': count}
     
-    # Si c'est un dict
+    # If it's a dict
     elif isinstance(data, dict):
         with database.get_connection() as conn:
             conn.execute("""
@@ -383,7 +384,7 @@ def ingest_json(file_path: Path, database) -> Dict[str, int]:
     return {'data': 0}
 
 
-def ingest_directory(data_dir: Path, database) -> Dict[str, Any]:
+def ingest_directory(data_dir: Path, database: 'AircraftDatabase') -> Dict[str, Any]:
     """
     Ingère tous les fichiers supportés d'un répertoire.
     Supporte: .txt (FAA CSV), .csv, .xlsx, .json, .parquet

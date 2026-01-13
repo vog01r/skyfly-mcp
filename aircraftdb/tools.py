@@ -289,7 +289,7 @@ async def call_aircraftdb_tool(name: str, arguments: dict) -> list[TextContent]:
             directory = arguments.get("directory", "ReleasableAircraft_dataset/")
             data_dir = Path(__file__).parent.parent / directory
             
-            # Exécuter l'ingestion dans un thread pour ne pas bloquer
+            # Execute ingestion in a thread to avoid blocking
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(None, ingest_directory, data_dir, db)
             
