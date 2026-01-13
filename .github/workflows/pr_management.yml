@@ -1,0 +1,229 @@
+name: 🔄 Gestion Automatique des Pull Requests
+
+on:
+  schedule:
+    # Exécution quotidienne à 9h UTC (10h Paris)
+    - cron: '0 9 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Mode simulation (ne fait que analyser)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+      
+      max_prs_threshold:
+        description: 'Seuil maximum de PRs ouvertes avant action'
+        required: false
+        default: '5'
+        type: string
+
+jobs:
+  pr_management:
+    runs-on: ubuntu-latest
+    name: 📊 Analyse et Gestion des PRs
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+    - name: 📥 Checkout du repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Configuration Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 🔧 Installation des dépendances
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests python-dateutil
+    
+    - name: 📋 Comptage des PRs ouvertes
+      id: count_prs
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        PR_COUNT=$(gh pr list --state open --json number | jq length)
+        echo "pr_count=$PR_COUNT" >> $GITHUB_OUTPUT
+        echo "📊 PRs ouvertes trouvées: $PR_COUNT"
+        
+        THRESHOLD=${{ github.event.inputs.max_prs_threshold || '5' }}
+        echo "threshold=$THRESHOLD" >> $GITHUB_OUTPUT
+        
+        if [ "$PR_COUNT" -gt "$THRESHOLD" ]; then
+          echo "needs_action=true" >> $GITHUB_OUTPUT
+          echo "⚠️ Seuil dépassé ($PR_COUNT > $THRESHOLD) - Action requise"
+        else
+          echo "needs_action=false" >> $GITHUB_OUTPUT
+          echo "✅ Nombre de PRs acceptable ($PR_COUNT <= $THRESHOLD)"
+        fi
+    
+    - name: 🎯 Exécution de la gestion des PRs
+      if: steps.count_prs.outputs.needs_action == 'true' || github.event_name == 'workflow_dispatch'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        DRY_RUN_FLAG=""
+        if [ "${{ github.event.inputs.dry_run || 'true' }}" = "true" ]; then
+          DRY_RUN_FLAG="--dry-run"
+          echo "🔍 Mode DRY-RUN activé"
+        else
+          echo "🚀 Mode EXECUTION activé"
+        fi
+        
+        python pr_management_solution.py $DRY_RUN_FLAG --output pr_management_report_$(date +%Y%m%d_%H%M%S).md
+    
+    - name: 📄 Upload du rapport
+      if: steps.count_prs.outputs.needs_action == 'true' || github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-management-report-${{ github.run_number }}
+        path: pr_management_report_*.md
+        retention-days: 30
+    
+    - name: 💬 Commentaire de résumé
+      if: steps.count_prs.outputs.needs_action == 'true' && github.event.inputs.dry_run != 'true'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Créer un issue de suivi si nécessaire
+        ISSUE_TITLE="🔄 Rapport de gestion automatique des PRs - $(date +%Y-%m-%d)"
+        ISSUE_BODY="## 📊 Résumé de la gestion automatique des PRs
+        
+        **Date d'exécution:** $(date)
+        **PRs ouvertes:** ${{ steps.count_prs.outputs.pr_count }}
+        **Seuil configuré:** ${{ steps.count_prs.outputs.threshold }}
+        
+        ### Actions automatiques exécutées:
+        - Analyse de toutes les PRs ouvertes
+        - Application des règles de gestion automatique
+        - Génération du rapport détaillé
+        
+        ### Fichiers générés:
+        - Rapport détaillé disponible dans les artifacts
+        
+        ### Prochaines étapes:
+        1. Vérifier les actions automatiques
+        2. Reviewer les PRs marquées comme prioritaires
+        3. Valider les fermetures automatiques
+        
+        ---
+        *Généré automatiquement par le workflow de gestion des PRs*"
+        
+        gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "automation,pr-management"
+
+  # Job pour fermer automatiquement les PRs draft anciennes
+  cleanup_old_drafts:
+    runs-on: ubuntu-latest
+    name: 🧹 Nettoyage des PRs draft anciennes
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - name: 📥 Checkout du repository
+      uses: actions/checkout@v4
+    
+    - name: 🧹 Fermeture des PRs draft anciennes
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🔍 Recherche des PRs draft anciennes (>30 jours)..."
+        
+        # Date limite (30 jours)
+        CUTOFF_DATE=$(date -d '30 days ago' --iso-8601)
+        
+        # Récupérer les PRs draft anciennes
+        OLD_DRAFTS=$(gh pr list --state open --draft --json number,title,createdAt --jq ".[] | select(.createdAt < \"$CUTOFF_DATE\") | .number")
+        
+        if [ -z "$OLD_DRAFTS" ]; then
+          echo "✅ Aucune PR draft ancienne trouvée"
+          exit 0
+        fi
+        
+        echo "📋 PRs draft anciennes trouvées:"
+        for pr_num in $OLD_DRAFTS; do
+          PR_INFO=$(gh pr view $pr_num --json title,createdAt)
+          echo "  - PR #$pr_num: $(echo $PR_INFO | jq -r .title)"
+          
+          # Fermer avec un commentaire explicatif
+          gh pr close $pr_num --comment "🧹 Fermeture automatique: PR draft inactive depuis plus de 30 jours.
+
+Si cette PR est toujours pertinente, vous pouvez:
+1. La rouvrir
+2. La convertir en PR ready pour review
+3. Créer une nouvelle PR avec le contenu mis à jour
+
+Cette action fait partie de la gestion automatique des PRs (SKYFLY-4)."
+          
+          echo "❌ Fermée: PR #$pr_num"
+        done
+
+  # Job pour activer l'auto-merge sur les PRs éligibles
+  enable_automerge:
+    runs-on: ubuntu-latest
+    name: 🤖 Activation Auto-merge
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - name: 📥 Checkout du repository
+      uses: actions/checkout@v4
+    
+    - name: 🤖 Activation auto-merge pour PRs éligibles
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🔍 Recherche des PRs éligibles pour auto-merge..."
+        
+        # Critères pour auto-merge:
+        # - PR ready (non-draft)
+        # - Mergeable
+        # - Petite taille (< 10 fichiers modifiés)
+        # - Pas de conflits
+        # - Mots-clés spécifiques (docs, fix, chore)
+        
+        ELIGIBLE_PRS=$(gh pr list --state open --json number,title,isDraft,mergeable,files --jq '
+          .[] | 
+          select(.isDraft == false) |
+          select(.mergeable == "MERGEABLE") |
+          select((.files | length) < 10) |
+          select(.title | test("^(docs|fix|chore|style)"; "i")) |
+          .number
+        ')
+        
+        if [ -z "$ELIGIBLE_PRS" ]; then
+          echo "✅ Aucune PR éligible pour auto-merge"
+          exit 0
+        fi
+        
+        echo "🤖 PRs éligibles pour auto-merge:"
+        for pr_num in $ELIGIBLE_PRS; do
+          PR_TITLE=$(gh pr view $pr_num --json title --jq .title)
+          echo "  - PR #$pr_num: $PR_TITLE"
+          
+          # Activer auto-merge avec squash
+          gh pr merge $pr_num --auto --squash
+          
+          # Ajouter un commentaire
+          gh pr comment $pr_num --body "🤖 Auto-merge activé pour cette PR car elle répond aux critères:
+- ✅ PR ready (non-draft)
+- ✅ Mergeable sans conflits  
+- ✅ Petite taille (< 10 fichiers)
+- ✅ Type de changement éligible
+
+La PR sera automatiquement mergée dès que les checks passeront."
+          
+          echo "🤖 Auto-merge activé: PR #$pr_num"
+        done
